@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Temperatura Photon 2</title>
+
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Raphael + JustGage (medidor) -->
+    <script src="https://cdn.jsdelivr.net/npm/raphael@2.3.0/raphael.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/justgage@1.6.1/justgage.min.js"></script>
+
+    <!-- Tu script -->
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <h1>Lectura de temperatura (°C) - Photon 2</h1>
+
+    <div id="gauge-container">
+        <div id="gauge"></div>
+        <p id="valor-num"></p>
+        <p id="estado"></p>
+    </div>
+</body>
+</html>

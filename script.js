@@ -1,62 +1,76 @@
-// ======= CONFIGURA AQUÍ TUS DATOS =======
-// Pon tu accessToken y deviceID reales
-var accessToken = "dee0df19a954aeab90df14d8f812690726c582f1";
-var deviceID    = "0a10aced202194944a0674bc";
+var gTemp = null;
+var gHum = null;
 
-// El nombre de la variable en el Photon 2
-// debe ser exactamente: Particle.variable("gradosC", &gradosC, DOUBLE);
-var url = "https://api.particle.io/v1/devices/" + deviceID + "/gradosC";
-// ========================================
+document.addEventListener("DOMContentLoaded", () => {
 
-var g = null;   // JustGage
-var intervalo = 1000; // ms
-
-// Cuando la página ya cargó
-document.addEventListener("DOMContentLoaded", function () {
-    // Crear el medidor
-    g = new JustGage({
-        id: "gauge",
+    // ==== TEMPERATURA ====
+    gTemp = new JustGage({
+        id: "gaugeTemp",
         value: 0,
         min: 0,
-        max: 100,           // rango máximo (ajusta si quieres)
-        title: "Temperatura (°C)",
+        max: 60,
         label: "°C",
-        decimals: 2
+        levelColors: ["#4caf50", "#ffc107", "#f44336"]
     });
 
-    // Empezar a leer
-    getReading();
+    // ==== HUMEDAD ====
+    gHum = new JustGage({
+        id: "gaugeHum",
+        value: 0,
+        min: 0,
+        max: 100,
+        label: "%",
+        levelColors: ["#2196f3", "#00bcd4", "#3f51b5"]
+    });
+
+    actualizar();
 });
 
-function getReading() {
-    $.ajax({
-        url: url,
-        method: "GET",
-        headers: {
-            "Authorization": "Bearer " + accessToken
-        },
-        success: function (data) {
-            // 'result' viene como número o string
-            var temp = parseFloat(data.result);
 
-            if (isNaN(temp)) {
-                console.log("Valor no numérico:", data.result);
-                $("#estado").text("Error: valor no numérico.");
-            } else {
-                // Actualizar medidor y texto
-                g.refresh(temp);
-                $("#valor-num").text(temp.toFixed(2) + " °C");
-                $("#estado").text("Lectura correcta");
-            }
+function actualizar() {
 
-            // Volver a leer después de 1s
-            setTimeout(getReading, intervalo);
-        },
-        error: function (err) {
-            console.log("ERROR", err);
-            $("#estado").text("Error de conexión. Revisa token / deviceID.");
-            // Reintentar después de unos segundos
-            setTimeout(getReading, 3000);
-        }
+    // ---------- TEMPERATURA ----------
+    $.get("/api/temperatura", (data) => {
+        let t = parseFloat(data.valor);
+        gTemp.refresh(t);
+        $("#tempVal").text(t.toFixed(2) + " °C");
     });
+
+
+    // ---------- HUMEDAD ----------
+    $.get("/api/humedad", (data) => {
+        let h = parseFloat(data.valor);
+        gHum.refresh(h);
+        $("#humVal").text(h.toFixed(2) + " %");
+
+        evaluarEstado();
+    });
+
+    setTimeout(actualizar, 1200);
+}
+
+
+// ---------- ESTADO ----------
+function evaluarEstado() {
+
+    let t = parseFloat($("#tempVal").text());
+    let h = parseFloat($("#humVal").text());
+    let estado = $("#estado");
+
+    if (h > 60) {
+        estado.text("Humedad alta: Foco encendido");
+        estado.css("color", "#d32f2f");
+    }
+    else if (t <= 27) {
+        estado.text("Temperatura baja: Secuencia general");
+        estado.css("color", "#1976d2");
+    }
+    else if (t > 27 && t <= 30) {
+        estado.text("Temperatura templada: PWM respiración");
+        estado.css("color", "#ffa000");
+    }
+    else if (t > 30) {
+        estado.text("Temperatura alta: Secuencia caliente");
+        estado.css("color", "#d84315");
+    }
 }
